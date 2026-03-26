@@ -424,7 +424,7 @@ function showDamage(text, target) {
 function handleInput(e) {
     if (!game.isPlaying || game.isPaused) return;
     const input = e.target.value.toLowerCase();
-    const target = game.currentWord.word.toLowerCase();
+    const target = game.currentWord[0].toLowerCase();
     const slot = document.getElementById('word-slot');
     
     if (!slot) return;
