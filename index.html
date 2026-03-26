@@ -137,7 +137,27 @@
                         </select>
                     </div>
                 </div>
-                <button id="start-btn">开始游戏</button>
+                <div class="start-actions">
+                    <button id="start-btn">开始游戏</button>
+                    <button id="profiles-btn" class="secondary-btn">账号管理</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 账号管理弹窗 -->
+        <div id="profiles-modal" class="modal hidden">
+            <div class="modal-content profile-management">
+                <h2>👤 账号管理 (多存档)</h2>
+                <div id="profile-list-container">
+                    <div id="profile-list"></div>
+                    <div class="create-profile-box">
+                        <input type="text" id="new-profile-name" placeholder="输入新英雄名称..." maxlength="12">
+                        <button id="create-profile-btn" class="mini-btn">创建新账号</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="close-modal-btn">关闭</button>
+                </div>
             </div>
         </div>
 

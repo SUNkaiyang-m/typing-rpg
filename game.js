@@ -57,6 +57,8 @@ const game = {
     currentWord: null,
     timerInterval: null,
     unlockedMonsters: new Set(),
+    currentProfile: 'Default',
+    profiles: {},
     achievements: {
         'first_kill': { name: '初试身手', desc: '击败第1只怪物', icon: '⚔️', unlocked: false, condition: () => game.monstersKilled >= 1 },
         'boss_slayer': { name: '猎杀者', desc: '击败Boss', icon: '👹', unlocked: false, condition: () => game.monstersKilled >= 5 },
@@ -97,6 +99,11 @@ const elements = {
     wordsCorrect: document.getElementById('words-correct'),
     expGained: document.getElementById('exp-gained'),
     goldGained: document.getElementById('gold-gained'),
+    profilesBtn: document.getElementById('profiles-btn'),
+    profilesModal: document.getElementById('profiles-modal'),
+    profileList: document.getElementById('profile-list'),
+    newProfileName: document.getElementById('new-profile-name'),
+    createProfileBtn: document.getElementById('create-profile-btn'),
     skills: [document.getElementById('skill-1'), document.getElementById('skill-2'), document.getElementById('skill-3')]
 };
 
@@ -506,20 +513,119 @@ function save() {
         mon: Array.from(game.unlockedMonsters),
         srs: game.srsQueue
     };
-    localStorage.setItem('typing_rpg_master_save', JSON.stringify(data));
+    game.profiles[game.currentProfile] = data;
+    localStorage.setItem('typing_rpg_profiles_v2', JSON.stringify(game.profiles));
+    localStorage.setItem('typing_rpg_current_profile', game.currentProfile);
 }
 
-function load() {
-    const s = localStorage.getItem('typing_rpg_master_save');
+function load(profileName) {
+    const s = localStorage.getItem('typing_rpg_profiles_v2');
     if (s) {
-        const d = JSON.parse(s);
-        game.hero.level = d.lvl || 1; 
-        game.hero.exp = d.exp || 0;
-        game.hero.gold = d.gold || 0;
-        (d.mon || []).forEach(m => game.unlockedMonsters.add(m));
-        game.srsQueue = d.srs || [];
+        game.profiles = JSON.parse(s);
+        const name = profileName || localStorage.getItem('typing_rpg_current_profile') || 'Default';
+        migrateOldData(); // One-time check
+        
+        const d = game.profiles[name];
+        if (d) {
+            game.currentProfile = name;
+            game.hero.level = d.lvl || 1; 
+            game.hero.exp = d.exp || 0;
+            // 按照用户要求重置或应用金币
+            game.hero.gold = Number(d.gold) || 0; 
+            game.unlockedMonsters = new Set(d.mon || []);
+            game.srsQueue = d.srs || [];
+        }
+    } else {
+        migrateOldData();
     }
 }
+
+// 数据迁移与金币重置逻辑
+function migrateOldData() {
+    const old = localStorage.getItem('typing_rpg_master_save');
+    const profilesExist = localStorage.getItem('typing_rpg_profiles_v2');
+    
+    if (!profilesExist) {
+        game.profiles = {};
+        if (old) {
+            const d = JSON.parse(old);
+            // 迁移到 "Hero" 存档并执行金币重置 (如果大于500)
+            let finalGold = Number(d.gold) || 0;
+            if (finalGold > 500) finalGold = 500;
+            
+            game.profiles['Hero'] = {
+                lvl: d.lvl || 1,
+                exp: d.exp || 0,
+                gold: finalGold,
+                mon: d.mon || [],
+                srs: d.srs || []
+            };
+            game.currentProfile = 'Hero';
+        } else {
+            game.profiles['Default'] = { lvl: 1, exp: 0, gold: 500, mon: [], srs: [] };
+            game.currentProfile = 'Default';
+        }
+        localStorage.setItem('typing_rpg_profiles_v2', JSON.stringify(game.profiles));
+    }
+}
+
+function renderProfiles() {
+    elements.profileList.innerHTML = '';
+    Object.keys(game.profiles).forEach(name => {
+        const d = game.profiles[name];
+        const item = document.createElement('div');
+        item.className = `profile-item ${name === game.currentProfile ? 'active' : ''}`;
+        item.innerHTML = `
+            <div class="profile-info">
+                <div class="profile-name">${name}</div>
+                <div class="profile-meta">等级: ${d.lvl} | 金币: ${d.gold}</div>
+            </div>
+            <div class="profile-actions">
+                <button class="mini-btn" onclick="switchProfile('${name}')">切换</button>
+                <button class="mini-btn delete-btn" onclick="deleteProfile('${name}')">删除</button>
+            </div>
+        `;
+        elements.profileList.appendChild(item);
+    });
+}
+
+window.switchProfile = function(name) {
+    save(); // 保存当前
+    load(name);
+    renderProfiles();
+    updateUI();
+    const stage = [...HERO_STAGES].reverse().find(s => game.hero.level >= s.level);
+    if (stage) elements.heroSprite.innerHTML = `<img src="${stage.image}" style="width: 150px; height: 150px; object-fit: contain;">`;
+};
+
+window.deleteProfile = function(name) {
+    if (Object.keys(game.profiles).length <= 1) {
+        alert("至少需要保留一个账号！");
+        return;
+    }
+    if (confirm(`确定要删除账号 "${name}" 吗？此操作不可撤销。`)) {
+        delete game.profiles[name];
+        if (game.currentProfile === name) {
+            game.currentProfile = Object.keys(game.profiles)[0];
+            load(game.currentProfile);
+        }
+        localStorage.setItem('typing_rpg_profiles_v2', JSON.stringify(game.profiles));
+        renderProfiles();
+        updateUI();
+    }
+};
+
+window.createProfile = function() {
+    const name = elements.newProfileName.value.trim();
+    if (!name) return;
+    if (game.profiles[name]) {
+        alert("该账号名称已存在！");
+        return;
+    }
+    game.profiles[name] = { lvl: 1, exp: 0, gold: 500, mon: [], srs: [] };
+    elements.newProfileName.value = '';
+    switchProfile(name);
+};
 
 function gameOver() {
     game.isPlaying = false;
@@ -533,6 +639,9 @@ function gameOver() {
 // ==========================================
 
 function init() {
+    // 初始化时加载存档 (包括迁移逻辑)
+    load();
+
     // 加载持久化设置
     let savedCategory = localStorage.getItem('typing_rpg_category') || 'coder';
     if (!DICT_COLLECTION[savedCategory]) savedCategory = 'coder';
@@ -585,7 +694,6 @@ function init() {
         elements.overlay.classList.add('hidden');
         game.isPlaying = true;
         
-        load();
         updateUI();
         updateHeroHp();
         const stage = [...HERO_STAGES].reverse().find(s => game.hero.level >= s.level);
@@ -661,9 +769,20 @@ function init() {
         btn.onclick = () => {
             btn.closest('.modal').classList.add('hidden');
             game.isPaused = false;
-            elements.wordInput.focus();
+            if (game.isPlaying) elements.wordInput.focus();
         };
     });
+
+    // 账号管理按钮
+    if (elements.profilesBtn) {
+        elements.profilesBtn.onclick = () => {
+            renderProfiles();
+            elements.profilesModal.classList.remove('hidden');
+        };
+    }
+    if (elements.createProfileBtn) {
+        elements.createProfileBtn.onclick = createProfile;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', init);
