@@ -222,7 +222,7 @@ function spawnMonster() {
 
 function nextWord() {
     const diff = getDifficultyForLevel(game.hero.level);
-    let masterPool = game.currentDictionary.filter(w => (w.difficulty || 1) === diff);
+    let masterPool = game.currentDictionary.filter(w => (w[2] || 1) === diff);
     if (masterPool.length === 0) masterPool = game.currentDictionary;
     
     // 保证有词可用
@@ -254,7 +254,7 @@ function nextWord() {
 
         // 防重复检查 (如果池子够大)
         let attempts = 0;
-        while (wordObj && game.wordHistory.includes(wordObj.word) && attempts < 10 && masterPool.length > 1) {
+        while (wordObj && game.wordHistory.includes(wordObj[0]) && attempts < 10 && masterPool.length > 1) {
             wordObj = game.shuffledQueue.shift();
             if (game.shuffledQueue.length === 0) {
                 game.shuffledQueue = [...masterPool].sort(() => Math.random() - 0.5);
@@ -272,10 +272,10 @@ function nextWord() {
     
     // 更新历史记录
     if (!game.wordHistory) game.wordHistory = [];
-    game.wordHistory.push(game.currentWord.word);
+    game.wordHistory.push(game.currentWord[0]);
     if (game.wordHistory.length > 20) game.wordHistory.shift();
     
-    const word = game.currentWord.word;
+    const word = game.currentWord[0];
     const isBoss = game.currentMonster.isBoss;
     
     // 显示处理
@@ -286,14 +286,14 @@ function nextWord() {
     }
     const display = displayChars.join('');
     
-    if (game.currentWord.sentence && game.currentWord.sentence.includes('___')) {
-        const parts = game.currentWord.sentence.split('___');
+    if (game.currentWord[3] && game.currentWord[3].includes('___')) {
+        const parts = game.currentWord[3].split('___');
         elements.targetWord.innerHTML = `<div class="sentence-context">${parts[0]}<span id="word-slot">${display}</span>${parts[1]}</div>`;
     } else {
         elements.targetWord.innerHTML = `<span id="word-slot">${display}</span>`;
     }
     
-    elements.meaning.textContent = game.currentWord.meaning;
+    elements.meaning.textContent = game.currentWord[1];
     elements.wordInput.value = '';
     speak(word);
     
@@ -446,7 +446,7 @@ function handleInput(e) {
         playSound('error');
         game.combo = 0;
         // 加入复习队列
-        if (!game.srsQueue.some(item => item.word === game.currentWord.word)) {
+        if (!game.srsQueue.some(item => item[0] === game.currentWord[0])) {
             game.srsQueue.push(game.currentWord);
         }
         e.target.value = '';
