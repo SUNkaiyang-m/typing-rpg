@@ -533,7 +533,13 @@ function load(profileName) {
             // 按照用户要求重置或应用金币
             game.hero.gold = Number(d.gold) || 0; 
             game.unlockedMonsters = new Set(d.mon || []);
-            game.srsQueue = d.srs || [];
+            // 迁移 SRS 队列：防止旧存档中的对象格式导致新版本崩溃
+            game.srsQueue = (d.srs || []).map(item => {
+                if (item && typeof item === 'object' && !Array.isArray(item)) {
+                    return [item.word, item.meaning, item.difficulty || 1, item.sentence || ""];
+                }
+                return item;
+            });
         }
     } else {
         migrateOldData();
