@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" translate="no" class="notranslate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打字战斗 RPG - 英语荣耀版</title>
+    <meta name="google" content="notranslate">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 侧边功能球 -->
+        <div id="side-nav">
+            <div id="achievement-trigger" class="nav-ball" title="勋章墙">🏆</div>
+            <div id="bestiary-trigger" class="nav-ball" title="怪物图鉴">📖</div>
+        </div>
+
+        <div id="game-options-selector">
+            <select id="game-dict-select" class="premium-select" aria-label="游戏内词库选择">
+                <option value="coder">程序员常用 (Coder)</option>
+                <option value="elementary">小学必会 (Elementary)</option>
+                <option value="cet4">大学英语四级 (CET-4)</option>
+                <option value="kaoyan">考研核心 (Postgraduate)</option>
+            </select>
+            <select id="game-diff-select" class="premium-select" aria-label="难度选择">
+                <option value="easy">初学者 (全显)</option>
+                <option value="normal">中级 (首尾)</option>
+                <option value="hard">高级 (首字)</option>
+                <option value="master">宗师 (盲打)</option>
+            </select>
+        </div>
+
+        <!-- 游戏状态栏 -->
+        <div id="status-bar">
+            <div class="stat">
+                <span class="label">等级</span>
+                <span id="level">1</span>
+            </div>
+            <div class="stat">
+                <span class="label">经验</span>
+                <div class="bar-container">
+                    <div id="exp-bar" class="bar"></div>
+                    <span id="exp-text">0/100</span>
+                </div>
+            </div>
+            <div class="stat">
+                <span class="label">金币</span>
+                <span id="gold">0</span>
+            </div>
+        </div>
+
+        <!-- 战斗区域 -->
+        <div id="battle-arena">
+            <div id="combo-display" class="hidden">COMBO <span id="combo-count">0</span></div>
+            
+            <div id="monster-area">
+                <div id="monster-name">史莱姆</div>
+                <div class="hp-container">
+                    <div id="monster-hp-bar" class="hp-bar"></div>
+                    <span id="monster-hp-text">100/100</span>
+                </div>
+                <div id="monster-sprite">👾</div>
+            </div>
+            
+            <div id="vs-area">
+                <div id="monster-attack-timer">
+                    <div class="timer-label">攻击倒计时</div>
+                    <div class="timer-track">
+                        <div id="timer-bar"></div>
+                    </div>
+                    <span id="timer-text">5.0s</span>
+                </div>
+            </div>
+
+            <div id="hero-area">
+                <div id="hero-name">英雄 (你)</div>
+                <div class="hp-container">
+                    <div id="hero-hp-bar" class="hp-bar"></div>
+                    <span id="hero-hp-text">100/100</span>
+                </div>
+                <div id="hero-sprite">🧙‍♂️</div>
+            </div>
+        </div>
+
+        <!-- 技能栏 -->
+        <div id="skills-bar">
+            <div class="skill-btn" id="skill-1" onclick="window.useSkill(1)">
+                <div class="skill-key">1</div>
+                <div class="skill-icon">💖</div>
+                <div class="skill-name">恢复术</div>
+                <div class="skill-cost">50G</div>
+            </div>
+            <div class="skill-btn" id="skill-2" onclick="window.useSkill(2)">
+                <div class="skill-key">2</div>
+                <div class="skill-icon">❄️</div>
+                <div class="skill-name">冰冻术</div>
+                <div class="skill-cost">80G</div>
+            </div>
+            <div class="skill-btn" id="skill-3" onclick="window.useSkill(3)">
+                <div class="skill-key">3</div>
+                <div class="skill-icon">💥</div>
+                <div class="skill-name">处决刃</div>
+                <div class="skill-cost">120G</div>
+            </div>
+        </div>
+
+        <!-- 单词区域 -->
+        <div id="word-area">
+            <div id="word-display">
+                <div id="target-word"></div>
+                <div id="meaning">选择词库，开始战斗！</div>
+            </div>
+            <div id="input-display">
+                <input type="password" id="word-input" autocomplete="off" autofocus placeholder="输入单词开始战斗...">
+            </div>
+        </div>
+
+        <!-- 开始界面 -->
+        <div id="overlay" class="show">
+            <div id="overlay-content">
+                <h1>⚔️ 打字战斗 RPG ⚔️</h1>
+                <p>正确拼写单词攻击怪物！<br>拼错或超时怪物会攻击你！</p>
+                <div class="dict-picker">
+                    <label>调整词库与难度：</label>
+                    <div class="dict-picker-options">
+                        <select id="start-dict-select" class="premium-select" aria-label="词库选择">
+                            <option value="coder" selected>程序员常用 (Coder)</option>
+                            <option value="elementary">小学必会 (Elementary)</option>
+                            <option value="cet4">大学英语四级 (CET-4)</option>
+                            <option value="kaoyan">考研核心 (Postgraduate)</option>
+                        </select>
+                        <select id="start-diff-select" class="premium-select" aria-label="难度选择">
+                            <option value="easy">初学者 (全显)</option>
+                            <option value="normal" selected>中级 (首尾)</option>
+                            <option value="hard">高级 (首字)</option>
+                            <option value="master">宗师 (盲打)</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="start-btn">开始游戏</button>
+            </div>
+        </div>
+
+        <!-- 暂停遮罩 -->
+        <div id="pause-overlay" class="hidden">
+            <div class="pause-content">
+                <h1>⏸️ 游戏暂停 ⏸️</h1>
+                <p>按 ESC 键或点击继续</p>
+                <button id="resume-btn">继续战斗</button>
+            </div>
+        </div>
+
+        <!-- 成就弹窗 -->
+        <div id="achievement-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>🏆 英语荣耀勋章</h2>
+                <div id="achievement-list" class="badge-grid"></div>
+                <button class="close-modal-btn">返回战场</button>
+            </div>
+        </div>
+
+        <!-- 怪物图鉴弹窗 -->
+        <div id="bestiary-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>📖 怪物大图鉴</h2>
+                <div id="monster-grid" class="badge-grid"></div>
+                <button class="close-modal-btn">返回战场</button>
+            </div>
+        </div>
+
+        <!-- 游戏结束 -->
+        <div id="game-over" class="hidden">
+            <div id="game-over-content">
+                <h1>💀 游戏结束 💀</h1>
+                <div id="game-stats">
+                    <p>击败怪物: <span id="monsters-killed">0</span></p>
+                    <p>正确单词: <span id="words-correct">0</span></p>
+                    <p>获得经验: <span id="exp-gained">0</span></p>
+                    <p>获得金币: <span id="gold-gained">0</span></p>
+                </div>
+                <button id="restart-btn">再来一次</button>
+            </div>
+        </div>
+    </div>
+    <script src="dictionary.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
