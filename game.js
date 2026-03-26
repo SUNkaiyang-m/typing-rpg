@@ -459,13 +459,14 @@ function handleInput(e) {
 
 window.useSkill = function(id) {
     if (!game.isPlaying || game.isPaused) return;
-    if (id === 1 && game.hero.gold >= 50) {
-        game.hero.gold -= 50; playSound('skill');
+    const skillId = parseInt(id);
+    if (skillId === 1 && game.hero.gold >= 50) {
+        game.hero.gold = Number(game.hero.gold) - 50; playSound('skill');
         const heal = Math.floor(game.hero.maxHp * 0.4);
         game.hero.hp = Math.min(game.hero.maxHp, game.hero.hp + heal);
         updateHeroHp(); showDamage(`+${heal}`, 'hero');
-    } else if (id === 2 && game.hero.gold >= 80) {
-        game.hero.gold -= 80; playSound('skill');
+    } else if (skillId === 2 && game.hero.gold >= 80) {
+        game.hero.gold = Number(game.hero.gold) - 80; playSound('skill');
         game.isFrozen = true;
         document.getElementById('battle-arena').style.filter = 'hue-rotate(180deg) brightness(1.2)';
         if (game.timerInterval) clearInterval(game.timerInterval);
@@ -474,8 +475,8 @@ window.useSkill = function(id) {
             document.getElementById('battle-arena').style.filter = 'none';
             resetTimer(game.timeLeft);
         }, 5000);
-    } else if (id === 3 && game.hero.gold >= 120) {
-        game.hero.gold -= 120; playSound('skill');
+    } else if (skillId === 3 && game.hero.gold >= 120) {
+        game.hero.gold = Number(game.hero.gold) - 120; playSound('skill');
         const dmg = Math.floor(game.currentMonster.maxHp * 0.8);
         game.currentMonster.hp -= dmg;
         showDamage(`EXECUTED -${dmg}`, 'monster');
@@ -596,10 +597,8 @@ function init() {
     elements.restartBtn.onclick = () => location.reload();
     
     elements.wordInput.onkeydown = (e) => {
-        if (['1', '2', '3'].includes(e.key)) {
-            e.preventDefault();
-            useSkill(parseInt(e.key));
-        }
+        // Only handle specific controls here if needed, 
+        // numbers 1-2-3 now exclusively handled by window listener to avoid double-trigger
     };
     elements.wordInput.oninput = handleInput;
 
